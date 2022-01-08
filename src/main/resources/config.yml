@@ -1,0 +1,10 @@
+settings:
+  database:
+    host: localhost
+    port: 3306
+    user: root
+    password: root
+    database: minecraft
+  lock-description:
+    coins: "&a价格: 99999点券."
+    points: ""
