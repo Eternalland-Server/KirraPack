@@ -34,11 +34,12 @@ repositories {
 }
 
 dependencies {
-    compileOnly("ink.ptms:Zaphkiel:1.7.0@jar")
-    compileOnly("net.sakuragame.eternal:JustInventory:1.0.0-SNAPSHOT@jar")
+    compileOnly("ink.ptms:Zaphkiel:1.7.6@jar")
     compileOnly("net.sakuragame.eternal:DragonCore:2.5.1-SNAPSHOT@jar")
     compileOnly("net.sakuragame:DataManager-Bukkit-API:1.3.2-SNAPSHOT@jar")
+    compileOnly("net.sakuragame.eternal:JustMessage:1.0.2-SNAPSHOT@jar")
     compileOnly("com.taylorswiftcn:UIFactory:1.0.1-SNAPSHOT@jar")
+    compileOnly("net.sakuragame.eternal:GemsEconomy:4.9.4-SNAPSHOT@jar")
     compileOnly("ink.ptms.core:v11200:11200")
     compileOnly(kotlin("stdlib"))
     compileOnly(fileTree("libs"))

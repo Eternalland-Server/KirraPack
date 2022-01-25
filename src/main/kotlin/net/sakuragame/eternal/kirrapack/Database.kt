@@ -2,32 +2,37 @@ package net.sakuragame.eternal.kirrapack
 
 import com.google.common.util.concurrent.Atomics
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import ink.ptms.zaphkiel.ZaphkielAPI
+import ink.ptms.zaphkiel.taboolib.module.nms.ItemTagSerializer.serializeData
+import net.sakuragame.eternal.kirrapack.pack.Pack
 import net.sakuragame.serversystems.manage.client.api.ClientManagerAPI
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import taboolib.library.xseries.XMaterial
-import taboolib.module.database.*
-import taboolib.platform.util.buildItem
+import taboolib.module.database.ColumnTypeSQL
+import taboolib.module.database.Table
+import taboolib.module.database.getHost
 import taboolib.platform.util.isAir
 
 @Suppress("SpellCheckingInspection")
 object Database {
 
-    data class ZaphkielItemData(val id: String, val value: String, val unique: String)
-
     const val PREFIX = "kirrapack"
+
+    val jsonParser by lazy {
+        JsonParser()
+    }
 
     val host = KirraPack.conf.getHost("settings.database")
 
-    val tableItem = Table("${PREFIX}_table_item", host) {
+    val tableItem = Table("${PREFIX}_items", host) {
         add { id() }
         add("uid") {
             type(ColumnTypeSQL.INT)
         }
         add("pack_id") {
-            type(ColumnTypeSQL.VARCHAR, 64)
+            type(ColumnTypeSQL.INT)
         }
         add("slot") {
             type(ColumnTypeSQL.INT)
@@ -52,23 +57,23 @@ object Database {
         tableItem.createTable(dataSource)
     }
 
-    fun getItemsByPack(player: Player, packIdentifier: String): HashMap<Int, ItemStack> {
+    fun getItemsByPack(player: Player, packId: Int): HashMap<Int, ItemStack> {
         val uid = ClientManagerAPI.getUserID(player.uniqueId)
         val itemMap = hashMapOf<Int, ItemStack>()
         tableItem.select(dataSource) {
-            where("uid" eq uid and ("pack_id" eq packIdentifier))
+            where("uid" eq uid and ("pack_id" eq packId))
         }.map {
             itemMap[getInt("slot")] = getItemFromParameters(player, getString("zap_id"), getString("zap_data"), getString("zap_unique"), getInt("amount"))
         }
         return itemMap
     }
 
-    fun getItem(player: Player, packIdentifier: String, slot: Int): ItemStack? {
+    fun getItem(player: Player, packId: Int, slot: Int): ItemStack? {
         val uid = ClientManagerAPI.getUserID(player.uniqueId)
         val atomicItem = Atomics.newReference<ItemStack>()
         if (uid == -1) return null
         tableItem.select(dataSource) {
-            where("uid" eq uid and ("pack_id" eq packIdentifier) and ("slot" eq slot))
+            where("uid" eq uid and ("pack_id" eq packId) and ("slot" eq slot))
         }.first {
             val item = getItemFromParameters(player, getString("zap_id"), getString("zap_data"), getString("zap_unique"), getInt("amount"))
             atomicItem.set(item)
@@ -76,20 +81,24 @@ object Database {
         return atomicItem.get()
     }
 
-    fun setItem(player: Player, packIdentifier: String, slot: Int, item: ItemStack) {
+    fun setItem(player: Player, packId: Int, slot: Int, item: ItemStack) {
         val uid = ClientManagerAPI.getUserID(player.uniqueId)
         if (uid == -1) return
+        setItem(uid, packId, slot, item)
+    }
+
+    fun setItem(uid: Int, packId: Int, slot: Int, item: ItemStack) {
         val isFind = tableItem.find(dataSource) {
-            where { where("uid" eq uid and ("pack_id" eq packIdentifier) and ("slot" eq slot)) }
+            where { where("uid" eq uid and ("pack_id" eq packId) and ("slot" eq slot)) }
         }
         val data = getDataFromItem(item)
         val amount = if (item.isAir) 0 else item.amount
         if (isFind) {
             // 更新.
             tableItem.update(dataSource) {
-                where { where("uid" eq uid and ("pack_id" eq packIdentifier) and ("slot" eq slot)) }
+                where { where("uid" eq uid and ("pack_id" eq packId) and ("slot" eq slot)) }
                 set("zap_id", data.id)
-                set("zap_data", data.value)
+                set("zap_data", data.dataValue)
                 set("zap_unique", data.unique)
                 set("amount", amount)
             }
@@ -97,27 +106,42 @@ object Database {
         }
         // 狂暴轰入.
         tableItem.insert(dataSource, "uid", "pack_id", "slot", "zap_id", "zap_data", "zap_unique", "amount") {
-            value(uid, packIdentifier, slot, data.id, data.value, data.unique, amount)
+            value(uid, packId, slot, data.id, data.dataValue, data.unique, amount)
         }
     }
 
     private fun getItemFromParameters(player: Player, id: String, data: String, unique: String, amount: Int): ItemStack {
-        val deserializeStream = ZaphkielAPI.deserialize(JsonObject().also { obj ->
+        val jsonObj = JsonObject().also { obj ->
             if (id == "null") {
-                return buildItem(XMaterial.AIR)
+                return Pack.air
             }
             obj.addProperty("id", id)
-            obj.addProperty("data", data)
-            obj.addProperty("unique", unique)
-        })
-        return deserializeStream.rebuildToItemStack(player).also {
+            obj.add("data", jsonParser.parse(data))
+            if (unique.isNotEmpty()) {
+                obj.add("unique", jsonParser.parse(unique))
+            }
+        }
+        return ZaphkielAPI.deserialize(jsonObj).rebuildToItemStack(player).also {
             it.amount = amount
         }
     }
 
     private fun getDataFromItem(item: ItemStack): ZaphkielItemData {
         if (item.isAir || ZaphkielAPI.getItem(item) == null) return ZaphkielItemData("null", "", "")
-        val serialized = ZaphkielAPI.serialize(item)
-        return ZaphkielItemData(serialized.get("id").asString, serialized.get("data").asString, serialized.get("unique").asString)
+        val itemStream = ZaphkielAPI.read(item)
+        return ZaphkielItemData(
+            id = itemStream.getZaphkielName(),
+            dataValue = serializeData(itemStream.getZaphkielData()).toString(),
+            unique = itemStream.getZaphkielUniqueData()?.let {
+                serializeData(it).also { data ->
+                    data.asJsonObject.remove("date-formatted")
+                }
+            }?.toString() ?: ""
+        )
+    }
+
+    data class ZaphkielItemData(val id: String, val dataValue: String, val unique: String) {
+
+        override fun toString() = "ZaphkielItemData{id: $id, data: $dataValue, unique: ${unique}}"
     }
 }

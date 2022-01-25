@@ -25,9 +25,9 @@ data class Pack(val type: PackType, private val itemMapping: HashMap<Int, ItemSt
         itemMapping[index] = item
     }
 
-    fun getItem(index: Int): ItemStack? {
-        if (!itemMapping.containsKey(index)) return null
-        return itemMapping[index]
+    fun getItem(index: Int): ItemStack {
+        if (index < 0 || index > 53) error("index went error, it must be in 0 - 53")
+        return itemMapping[index]!!
     }
 
     fun get() = hashMapOf<Int, ItemStack>().apply {

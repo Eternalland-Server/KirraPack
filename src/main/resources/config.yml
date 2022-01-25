@@ -6,5 +6,8 @@ settings:
     password: root
     database: minecraft
   lock-description:
-    coins: "&a价格: 99999点券."
-    points: ""
+    coins: "&a价格: 100.0万金币."
+    points: "&a价格: 500.0万点券"
+    vip: "&a充值 VIP 后自动解锁."
+    svp: "&a充值 SVP 后自动解锁."
+    mvp: "&a充值 MVP 后自动解锁."

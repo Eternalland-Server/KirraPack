@@ -1,7 +1,6 @@
 package net.sakuragame.eternal.kirrapack
 
 import taboolib.common.platform.Plugin
-import taboolib.common.platform.function.info
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
 import taboolib.platform.BukkitPlugin

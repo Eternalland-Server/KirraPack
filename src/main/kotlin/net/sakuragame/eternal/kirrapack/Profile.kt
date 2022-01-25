@@ -1,7 +1,10 @@
 package net.sakuragame.eternal.kirrapack
 
+import net.sakuragame.eternal.gemseconomy.api.GemsEconomyAPI
+import net.sakuragame.eternal.kirrapack.function.FunctionListener
 import net.sakuragame.eternal.kirrapack.pack.Pack
 import net.sakuragame.eternal.kirrapack.pack.PackType
+import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockFailType
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.player.PlayerJoinEvent
@@ -32,7 +35,7 @@ class Profile(val player: Player) {
 
         @Awake(LifeCycle.ACTIVE)
         fun i() {
-            submit(period = 10000L, async = true) {
+            submit(period = 4000L, async = true) {
                 profiles.values.forEach {
                     it.save()
                 }
@@ -69,10 +72,9 @@ class Profile(val player: Player) {
     fun read() {
         submit(async = true) {
             PackType.values().forEach {
-                val itemMapping = Database.getItemsByPack(player, it.internalName)
+                val itemMapping = Database.getItemsByPack(player, it.index)
                 // 数据库内无数据，进行初始化。
                 if (itemMapping.isEmpty()) {
-                    Bukkit.broadcastMessage("preInit")
                     init()
                     return@submit
                 }
@@ -97,7 +99,7 @@ class Profile(val player: Player) {
         submit(async = true) {
             currentPacks.forEach { (type, pack) ->
                 pack.get().forEach { (key, item) ->
-                    Database.setItem(player, type.identifier, key, item)
+                    Database.setItem(player, type.index, key, item)
                 }
             }
         }
@@ -107,7 +109,20 @@ class Profile(val player: Player) {
         return currentPacks.values.find { it.type.index == num }
     }
 
+    fun unlock(packType: PackType): UnlockFailType? {
+        val unlockCondition = packType.packUnlockCondition ?: return UnlockFailType.TYPE_WRONG
+        unlockCondition.currencyMap.forEach { (currency, value) ->
+            Bukkit.broadcastMessage((GemsEconomyAPI.getBalance(player.uniqueId, currency) < value).toString())
+            if (GemsEconomyAPI.getBalance(player.uniqueId, currency) < value) {
+                return UnlockFailType.NOT_ENOUGH
+            }
+            GemsEconomyAPI.withdraw(player.uniqueId, value, currency, "解锁 ${packType.internalName} 背包扣款")
+        }
+        return null
+    }
+
     fun drop() {
+        FunctionListener.baffle.reset(player.name)
         profiles.remove(player.name)
     }
 }
