@@ -25,7 +25,7 @@ import taboolib.common.platform.function.submit
  */
 class Profile(val player: Player) {
 
-    val currentPacks = mutableMapOf<PackType, Pack>()
+    private val currentPacks = mutableMapOf<PackType, Pack>()
 
     companion object {
 

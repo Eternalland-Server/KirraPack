@@ -98,7 +98,7 @@ object Database {
         setItem(uid, packId, slot, item)
     }
 
-    fun setItem(uid: Int, packId: Int, slot: Int, item: ItemStack) {
+    private fun setItem(uid: Int, packId: Int, slot: Int, item: ItemStack) {
         val isFind = tableItem.find(dataSource) {
             where { where("uid" eq uid and ("pack_id" eq packId) and ("slot" eq slot)) }
         }
