@@ -10,6 +10,7 @@ import net.sakuragame.serversystems.manage.client.api.ClientManagerAPI
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import taboolib.module.database.ColumnOptionSQL
 import taboolib.module.database.ColumnTypeSQL
 import taboolib.module.database.Table
 import taboolib.module.database.getHost
@@ -18,24 +19,30 @@ import taboolib.platform.util.isAir
 @Suppress("SpellCheckingInspection")
 object Database {
 
-    const val PREFIX = "kirrapack"
+    private const val PREFIX = "kirrapack"
 
-    val jsonParser by lazy {
+    private val jsonParser by lazy {
         JsonParser()
     }
 
-    val host = KirraPack.conf.getHost("settings.database")
+    private val host = KirraPack.conf.getHost("settings.database")
 
-    val tableItem = Table("${PREFIX}_items", host) {
+    private val tableItem = Table("${PREFIX}_items", host) {
         add { id() }
         add("uid") {
-            type(ColumnTypeSQL.INT)
+            type(ColumnTypeSQL.INT) {
+                options(ColumnOptionSQL.KEY)
+            }
         }
         add("pack_id") {
-            type(ColumnTypeSQL.INT)
+            type(ColumnTypeSQL.INT) {
+                options(ColumnOptionSQL.KEY)
+            }
         }
         add("slot") {
-            type(ColumnTypeSQL.INT)
+            type(ColumnTypeSQL.INT) {
+                options(ColumnOptionSQL.KEY)
+            }
         }
         add("zap_id") {
             type(ColumnTypeSQL.VARCHAR, 64)
@@ -51,7 +58,7 @@ object Database {
         }
     }
 
-    val dataSource = host.createDataSource()
+    private val dataSource = host.createDataSource()
 
     init {
         tableItem.createTable(dataSource)
@@ -63,7 +70,9 @@ object Database {
         tableItem.select(dataSource) {
             where("uid" eq uid and ("pack_id" eq packId))
         }.map {
-            itemMap[getInt("slot")] = getItemFromParameters(player, getString("zap_id"), getString("zap_data"), getString("zap_unique"), getInt("amount"))
+            itemMap[getInt("slot")] = getItemFromParameters(
+                player, getString("zap_id"), getString("zap_data"), getString("zap_unique"), getInt("amount")
+            )
         }
         return itemMap
     }
@@ -75,7 +84,9 @@ object Database {
         tableItem.select(dataSource) {
             where("uid" eq uid and ("pack_id" eq packId) and ("slot" eq slot))
         }.first {
-            val item = getItemFromParameters(player, getString("zap_id"), getString("zap_data"), getString("zap_unique"), getInt("amount"))
+            val item = getItemFromParameters(
+                player, getString("zap_id"), getString("zap_data"), getString("zap_unique"), getInt("amount")
+            )
             atomicItem.set(item)
         }
         return atomicItem.get()
@@ -110,7 +121,9 @@ object Database {
         }
     }
 
-    private fun getItemFromParameters(player: Player, id: String, data: String, unique: String, amount: Int): ItemStack {
+    private fun getItemFromParameters(
+        player: Player, id: String, data: String, unique: String, amount: Int
+    ): ItemStack {
         val jsonObj = JsonObject().also { obj ->
             if (id == "null") {
                 return Pack.air
