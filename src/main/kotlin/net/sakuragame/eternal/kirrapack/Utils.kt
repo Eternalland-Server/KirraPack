@@ -1,7 +1,12 @@
 package net.sakuragame.eternal.kirrapack
 
 import net.sakuragame.eternal.kirrapack.pack.PackType
+import org.bukkit.Bukkit
 import taboolib.module.configuration.util.getStringColored
+
+fun debug(message: String) {
+    Bukkit.getConsoleSender().sendMessage("[KirraPack] $message")
+}
 
 fun PackType.getLockMessage(): String {
     return when (index) {

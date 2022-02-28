@@ -122,7 +122,7 @@ object Database {
     }
 
     private fun getItemFromParameters(
-        player: Player, id: String, data: String, unique: String, amount: Int
+        player: Player, id: String, data: String, unique: String, amount: Int,
     ): ItemStack {
         val jsonObj = JsonObject().also { obj ->
             if (id == "null") {

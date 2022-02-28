@@ -12,9 +12,12 @@ import org.bukkit.event.player.PlayerKickEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
+import taboolib.common.platform.Schedule
 import taboolib.common.platform.event.EventPriority
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common.platform.function.submit
+import taboolib.platform.util.isAir
+import javax.xml.crypto.Data
 
 /**
  * KirraPack
@@ -33,13 +36,16 @@ class Profile(val player: Player) {
 
         fun Player.profile() = profiles.values.firstOrNull { it.player.uniqueId == uniqueId }
 
-        @Awake(LifeCycle.ACTIVE)
+        @Schedule(async = true, period = 4000L)
         fun i() {
-            submit(period = 4000L, async = true) {
-                profiles.values.forEach {
-                    it.save()
-                }
+            if (profiles.isEmpty()) {
+                return
             }
+            debug("正在保存所有的玩家数据...")
+            profiles.values.forEach {
+                it.save()
+            }
+            debug("保存完毕.")
         }
 
         @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -71,27 +77,43 @@ class Profile(val player: Player) {
     // read from database.
     fun read() {
         submit(async = true) {
-            PackType.values().forEach {
-                val itemMapping = Database.getItemsByPack(player, it.index)
-                // 数据库内无数据，进行初始化。
-                if (itemMapping.isEmpty()) {
-                    init()
-                    return@submit
+            val defaultMapping = Database.getItemsByPack(player, PackType.DEFAULT.index)
+            if (defaultMapping.isEmpty()) {
+                init()
+                return@submit
+            }
+            currentPacks[PackType.DEFAULT] = Pack(PackType.DEFAULT, defaultMapping)
+            if (player.hasPermission("vip")) {
+                val vipMapping = Database.getItemsByPack(player, PackType.VIP.index)
+                currentPacks[PackType.VIP] = Pack(PackType.VIP, vipMapping)
+            }
+            if (player.hasPermission("svp")) {
+                val svpMapping = Database.getItemsByPack(player, PackType.SVP.index)
+                currentPacks[PackType.SVP] = Pack(PackType.VIP, svpMapping)
+            }
+            if (player.hasPermission("mvp")) {
+                val mvpMapping = Database.getItemsByPack(player, PackType.MVP.index)
+                currentPacks[PackType.MVP] = Pack(PackType.VIP, mvpMapping)
+            }
+            val lastPackTypes = listOf(PackType.COINS, PackType.POINTS)
+            lastPackTypes.forEach {
+                val lastMapping = Database.getItemsByPack(player, it.index)
+                if (lastMapping.isEmpty()) {
+                    return@forEach
                 }
-                currentPacks[it] = Pack(it, itemMapping)
+                currentPacks[it] = Pack(it, lastMapping)
             }
         }
     }
 
     // init.
-    fun init() {
+    private fun init() {
         PackType.values().forEach {
             if (!player.hasPermission(it.identifier)) {
                 return@forEach
             }
             currentPacks[it] = Pack(it)
         }
-        save()
     }
 
     // save to database.
@@ -109,16 +131,27 @@ class Profile(val player: Player) {
         return currentPacks.values.find { it.type.index == num }
     }
 
-    fun unlock(packType: PackType): UnlockFailType? {
+    fun unlock(packType: PackType, forceUnlock: Boolean = false): UnlockFailType? {
+        if (currentPacks.keys.contains(packType)) {
+            return UnlockFailType.ALREADY_UNLOCKED
+        }
+        if (forceUnlock) {
+            doUnlock(packType)
+        }
         val unlockCondition = packType.packUnlockCondition ?: return UnlockFailType.TYPE_WRONG
         unlockCondition.currencyMap.forEach { (currency, value) ->
-            Bukkit.broadcastMessage((GemsEconomyAPI.getBalance(player.uniqueId, currency) < value).toString())
             if (GemsEconomyAPI.getBalance(player.uniqueId, currency) < value) {
                 return UnlockFailType.NOT_ENOUGH
             }
+            doUnlock(packType)
             GemsEconomyAPI.withdraw(player.uniqueId, value, currency, "解锁 ${packType.internalName} 背包扣款")
         }
         return null
+    }
+
+    private fun doUnlock(packType: PackType) {
+        currentPacks[packType] = Pack(packType)
+        save()
     }
 
     fun drop() {

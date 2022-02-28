@@ -12,18 +12,14 @@ import net.sakuragame.eternal.kirrapack.getLockMessage
 import net.sakuragame.eternal.kirrapack.pack.Pack
 import net.sakuragame.eternal.kirrapack.pack.PackType
 import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockFailType
-import org.apache.logging.log4j.message.Message
-import org.bukkit.Bukkit
+import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockFailType.*
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import org.jetbrains.annotations.Contract
 import taboolib.common.platform.event.EventPriority
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common5.Baffle
 import taboolib.platform.util.asLangText
-import taboolib.platform.util.isAir
-import taboolib.platform.util.sendLang
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -76,8 +72,11 @@ object FunctionListener {
                         MessageAPI.sendActionTip(player, player.asLangText("succ-unlock-pack"))
                         player.closeInventory()
                     }
-                    UnlockFailType.NOT_ENOUGH -> MessageAPI.sendActionTip(player, player.asLangText("fail-unlock-pack-by-coins-not-enough"))
-                    UnlockFailType.TYPE_WRONG -> MessageAPI.sendActionTip(player, player.asLangText("fail-unlock-pack-by-type-wrong"))
+                    NOT_ENOUGH -> MessageAPI.sendActionTip(player, player.asLangText("fail-unlock-pack-by-coins-not-enough"))
+                    TYPE_WRONG -> MessageAPI.sendActionTip(player, player.asLangText("fail-unlock-pack-by-type-wrong"))
+                    ALREADY_UNLOCKED -> {
+                        // GO FUCK YOURSELF
+                    }
                 }
             }
         }

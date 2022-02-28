@@ -4,8 +4,6 @@ package net.sakuragame.eternal.kirrapack
 object KirraPackAPI {
 
     fun save() {
-        Profile.profiles.values.forEach {
-            it.save()
-        }
+        Profile.i()
     }
 }
