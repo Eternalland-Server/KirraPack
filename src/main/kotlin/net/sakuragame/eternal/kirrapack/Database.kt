@@ -58,7 +58,9 @@ object Database {
         }
     }
 
-    private val dataSource = host.createDataSource()
+    private val dataSource by lazy {
+        ClientManagerAPI.getDataManager().dataSource
+    }
 
     init {
         tableItem.createTable(dataSource)
