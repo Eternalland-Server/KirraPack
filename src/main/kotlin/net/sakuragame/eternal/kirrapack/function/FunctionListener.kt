@@ -20,6 +20,7 @@ import taboolib.common.platform.event.EventPriority
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common5.Baffle
 import taboolib.platform.util.asLangText
+import taboolib.platform.util.isAir
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -56,6 +57,7 @@ object FunctionListener {
 
         when (e.params.getParam(1)) {
             "warehouse_page" -> {
+                doCursorItemSafetyChecking(player)
                 val page = e.params.getParamI(2)
                 WarehouseScreen.open(player, page)
             }
@@ -128,6 +130,17 @@ object FunctionListener {
         e.name = pack.type.internalName
         e.contents = getContents(pack)
         e.stock = getStock(pack)
+    }
+
+    private fun doCursorItemSafetyChecking(player: Player) {
+        val cursorItem = player.itemOnCursor.clone()
+        if (cursorItem.isAir()) return
+        player.itemOnCursor = null
+        if (player.inventory.firstEmpty() == -1) {
+            player.closeInventory()
+            player.world.dropItemNaturally(player.location, cursorItem)
+        }
+        player.inventory.addItem(cursorItem)
     }
 
     private fun updateStock(player: Player, pack: Pack) {

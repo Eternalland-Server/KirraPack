@@ -1,10 +1,10 @@
 settings:
   database:
-    host: localhost
+    host: 172.18.0.1
     port: 3306
-    user: root
-    password: root
-    database: minecraft
+    user: rpg-test
+    password: jPGbpbpCy3W5Ssmz
+    database: rpg-test
   lock-description:
     coins: "&a价格: 100.0万金币."
     points: "&a价格: 500.0万点券"
