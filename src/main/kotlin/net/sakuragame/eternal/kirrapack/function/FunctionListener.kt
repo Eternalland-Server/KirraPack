@@ -11,7 +11,6 @@ import net.sakuragame.eternal.kirrapack.Profile.Companion.profile
 import net.sakuragame.eternal.kirrapack.getLockMessage
 import net.sakuragame.eternal.kirrapack.pack.Pack
 import net.sakuragame.eternal.kirrapack.pack.PackType
-import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockFailType
 import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockFailType.*
 import org.bukkit.Material
 import org.bukkit.entity.Player
