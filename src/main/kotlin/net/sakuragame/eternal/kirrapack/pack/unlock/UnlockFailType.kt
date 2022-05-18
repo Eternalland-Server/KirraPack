@@ -7,7 +7,6 @@ package net.sakuragame.eternal.kirrapack.pack.unlock
  * @property TYPE_WRONG 解锁方式错误.
  * @property ALREADY_UNLOCKED 已解锁.
  *
- * @constructor Create empty Unlock fail type
  */
 enum class UnlockFailType {
     NOT_ENOUGH, TYPE_WRONG, ALREADY_UNLOCKED
