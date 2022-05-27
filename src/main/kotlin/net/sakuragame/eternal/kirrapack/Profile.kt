@@ -84,11 +84,11 @@ class Profile(val player: Player) {
             }
             if (player.hasPermission("svp")) {
                 val svpMapping = Database.getItemsByPack(player, PackType.SVP.index)
-                currentPacks[PackType.SVP] = Pack(PackType.VIP, svpMapping)
+                currentPacks[PackType.SVP] = Pack(PackType.SVP, svpMapping)
             }
             if (player.hasPermission("mvp")) {
                 val mvpMapping = Database.getItemsByPack(player, PackType.MVP.index)
-                currentPacks[PackType.MVP] = Pack(PackType.VIP, mvpMapping)
+                currentPacks[PackType.MVP] = Pack(PackType.MVP, mvpMapping)
             }
             val lastPackTypes = listOf(PackType.COINS, PackType.POINTS)
             lastPackTypes.forEach {
