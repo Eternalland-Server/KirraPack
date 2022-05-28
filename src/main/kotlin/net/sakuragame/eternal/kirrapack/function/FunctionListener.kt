@@ -3,14 +3,15 @@ package net.sakuragame.eternal.kirrapack.function
 import com.taylorswiftcn.megumi.uifactory.event.comp.UIFCompSubmitEvent
 import net.sakuragame.eternal.dragoncore.api.event.PlayerSlotUpdateEvent
 import net.sakuragame.eternal.dragoncore.api.event.slot.PlayerSlotClickEvent
-import net.sakuragame.eternal.justinventory.JustInventory
 import net.sakuragame.eternal.justinventory.api.event.WarehouseOpenEvent
 import net.sakuragame.eternal.justinventory.ui.screen.WarehouseScreen
 import net.sakuragame.eternal.justmessage.api.MessageAPI
+import net.sakuragame.eternal.kirrapack.KirraPack
 import net.sakuragame.eternal.kirrapack.Profile.Companion.profile
 import net.sakuragame.eternal.kirrapack.getLockMessage
 import net.sakuragame.eternal.kirrapack.pack.Pack
 import net.sakuragame.eternal.kirrapack.pack.PackType
+import net.sakuragame.eternal.kirrapack.pack.SlotData
 import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockFailType.*
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -33,12 +34,6 @@ import java.util.concurrent.TimeUnit
  */
 object FunctionListener {
 
-    data class SlotData(val index: Int, val slot: Int)
-
-    val depend by lazy {
-        JustInventory.getInstance()!!
-    }
-
     val baffle by lazy {
         Baffle.of(1, TimeUnit.SECONDS)
     }
@@ -52,11 +47,11 @@ object FunctionListener {
         if (screenID != WarehouseScreen.screenID) return
         val name = e.params.getParam(0)
 
-        if (name != depend.name) return
+        if (name != KirraPack.justInventory.name) return
 
         when (e.params.getParam(1)) {
             "warehouse_page" -> {
-                doCursorItemSafetyChecking(player)
+                doCursorItemSafetyCheck(player)
                 val page = e.params.getParamI(2)
                 WarehouseScreen.open(player, page)
             }
@@ -131,7 +126,7 @@ object FunctionListener {
         e.stock = getStock(pack)
     }
 
-    private fun doCursorItemSafetyChecking(player: Player) {
+    private fun doCursorItemSafetyCheck(player: Player) {
         val cursorItem = player.itemOnCursor.clone()
         if (cursorItem.isAir()) return
         player.itemOnCursor = null

@@ -20,7 +20,7 @@ object Database {
 
     private const val PREFIX = "kirrapack"
 
-    private val jsonParser by lazy {
+    private val jParser by lazy {
         JsonParser()
     }
 
@@ -130,9 +130,9 @@ object Database {
                 return Pack.air
             }
             obj.addProperty("id", id)
-            obj.add("data", jsonParser.parse(data))
+            obj.add("data", jParser.parse(data))
             if (unique.isNotEmpty()) {
-                obj.add("unique", jsonParser.parse(unique))
+                obj.add("unique", jParser.parse(unique))
             }
         }
         return ZaphkielAPI.deserialize(jsonObj).rebuildToItemStack(player).also {

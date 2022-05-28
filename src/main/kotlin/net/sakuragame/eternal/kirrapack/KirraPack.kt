@@ -1,5 +1,6 @@
 package net.sakuragame.eternal.kirrapack
 
+import net.sakuragame.eternal.justinventory.JustInventory
 import taboolib.common.platform.Plugin
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
@@ -14,5 +15,9 @@ object KirraPack : Plugin() {
 
     val plugin by lazy {
         BukkitPlugin.getInstance()
+    }
+
+    val justInventory by lazy {
+        JustInventory.getInstance()!!
     }
 }

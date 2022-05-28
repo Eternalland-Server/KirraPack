@@ -16,7 +16,7 @@ taboolib {
     install("platform-bukkit")
     install("expansion-command-helper")
     classifier = null
-    version = "6.0.8-3"
+    version = "6.0.8-5"
 }
 
 repositories {
@@ -40,7 +40,7 @@ dependencies {
     compileOnly("net.sakuragame.eternal:JustMessage:1.0.2-SNAPSHOT@jar")
     compileOnly("com.taylorswiftcn:UIFactory:1.0.1-SNAPSHOT@jar")
     compileOnly("net.sakuragame.eternal:GemsEconomy:4.9.4-SNAPSHOT@jar")
-    compileOnly("net.luckperms:api:5.3")
+    compileOnly("net.luckperms:api:5.4")
     compileOnly("ink.ptms.core:v11200:11200")
     compileOnly(kotlin("stdlib"))
     compileOnly(fileTree("libs"))
