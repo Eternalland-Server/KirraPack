@@ -1,7 +1,8 @@
 package net.sakuragame.eternal.kirrapack.pack
 
-import net.sakuragame.eternal.gemseconomy.currency.EternalCurrency
-import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockCondition
+import net.sakuragame.eternal.justinventory.api.event.WarehouseOpenEvent
+import net.sakuragame.eternal.kirrapack.KirraPackAPI
+import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockData
 import taboolib.module.chat.colored
 
 /**
@@ -11,14 +12,12 @@ import taboolib.module.chat.colored
  * @author kirraObj
  * @since 2022/1/9 2:35
  */
-enum class PackType(val index: Int, val identifier: String, val internalName: String, condition: UnlockCondition?) {
+enum class PackType(val index: Int, val displayName: String, val conditionMap: Map<WarehouseOpenEvent.LockLevel, UnlockData>) {
 
-    DEFAULT(0, "DEFAULT_WARE_HOUSE", "&6默认仓库".colored(), null),
-    COINS(1, "COINS_WARE_HOUSE", "&6金币仓库".colored(), UnlockCondition(currencyMap = mapOf(Pair(EternalCurrency.Money, 100000000.0)))),
-    POINTS(2, "POINTS_WARE_HOUSE", "&6点券仓库".colored(), UnlockCondition(currencyMap = mapOf(Pair(EternalCurrency.Coins, 5000000.0)))),
-    VIP(3, "VIP_WARE_HOUSE", "&6VIP 仓库".colored(), null),
-    SVP(4, "SVP_WARE_HOUSE", "&6SVP 仓库".colored(), null),
-    MVP(5, "MVP_WARE_HOUSE", "&6MVP 仓库".colored(), null);
-
-    var packUnlockCondition: UnlockCondition? = condition
+    DEFAULT(0, "&6默认仓库".colored(), KirraPackAPI.getConditionByIndex(1)),
+    MONEY(1, "&6金币仓库".colored(), KirraPackAPI.getConditionByIndex(2)),
+    COINS(2, "&6点券仓库".colored(), KirraPackAPI.getConditionByIndex(3)),
+    VIP(3, "&6VIP 仓库".colored(), KirraPackAPI.getConditionByIndex(4)),
+    SVP(4, "&6SVP 仓库".colored(), KirraPackAPI.getConditionByIndex(5)),
+    MVP(5, "&6MVP 仓库".colored(), KirraPackAPI.getConditionByIndex(6));
 }

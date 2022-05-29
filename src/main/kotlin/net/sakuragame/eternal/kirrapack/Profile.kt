@@ -1,6 +1,9 @@
 package net.sakuragame.eternal.kirrapack
 
+import net.sakuragame.eternal.cargo.CargoAPI
+import net.sakuragame.eternal.cargo.value.ValueType
 import net.sakuragame.eternal.gemseconomy.api.GemsEconomyAPI
+import net.sakuragame.eternal.justinventory.api.event.WarehouseOpenEvent.LockLevel
 import net.sakuragame.eternal.kirrapack.function.FunctionListener
 import net.sakuragame.eternal.kirrapack.pack.Pack
 import net.sakuragame.eternal.kirrapack.pack.PackType
@@ -21,9 +24,10 @@ import taboolib.common.platform.function.submit
  * @author kirraObj
  * @since 2022/1/9 2:43
  */
+@Suppress("SpellCheckingInspection")
 class Profile(val player: Player) {
 
-    private val currentPacks = mutableMapOf<PackType, Pack>()
+    private val packs = mutableListOf<Pack>()
 
     companion object {
 
@@ -46,8 +50,10 @@ class Profile(val player: Player) {
         @SubscribeEvent(priority = EventPriority.HIGHEST)
         fun e(e: PlayerJoinEvent) {
             val player = e.player
-            profiles[player.name] = Profile(player).apply {
-                read()
+            submit(async = true) {
+                profiles[player.name] = Profile(player).apply {
+                    read()
+                }
             }
         }
 
@@ -62,91 +68,106 @@ class Profile(val player: Player) {
         }
 
         private fun dataRecycle(player: Player) {
-            player.profile()?.apply {
-                save()
-                drop()
+            submit(async = true) {
+                player.profile()?.apply {
+                    save()
+                    drop()
+                }
             }
         }
     }
 
     // read from database.
     fun read() {
-        submit(async = true) {
-            val defaultMapping = Database.getItemsByPack(player, PackType.DEFAULT.index)
-            if (defaultMapping.isEmpty()) {
-                init()
-                return@submit
+        val defaultMapping = Database.getItemsByPack(player, PackType.DEFAULT.index)
+        // 默认背包为空, 说明玩家第一次进入服务器, 进行初始化
+        if (defaultMapping.isEmpty()) {
+            init()
+            return
+        }
+        // 设置默认背包
+        packs += Pack(PackType.DEFAULT, defaultMapping, getLockLevelByPlayer(player, PackType.DEFAULT))
+        // 设置钞能力背包
+        listOf(PackType.VIP, PackType.SVP, PackType.MVP).forEach {
+            val name = it.name.lowercase()
+            if (player.hasPermission(name)) {
+                val mapping = Database.getItemsByPack(player, it.index)
+                packs += Pack(it, mapping, getLockLevelByPlayer(player, it))
             }
-            currentPacks[PackType.DEFAULT] = Pack(PackType.DEFAULT, defaultMapping)
-            if (player.hasPermission("vip")) {
-                val vipMapping = Database.getItemsByPack(player, PackType.VIP.index)
-                currentPacks[PackType.VIP] = Pack(PackType.VIP, vipMapping)
+        }
+        // 设置金币与点券背包
+        listOf(PackType.MONEY, PackType.COINS).forEach {
+            val lastMapping = Database.getItemsByPack(player, it.index)
+            if (lastMapping.isEmpty()) {
+                return@forEach
             }
-            if (player.hasPermission("svp")) {
-                val svpMapping = Database.getItemsByPack(player, PackType.SVP.index)
-                currentPacks[PackType.SVP] = Pack(PackType.SVP, svpMapping)
-            }
-            if (player.hasPermission("mvp")) {
-                val mvpMapping = Database.getItemsByPack(player, PackType.MVP.index)
-                currentPacks[PackType.MVP] = Pack(PackType.MVP, mvpMapping)
-            }
-            val lastPackTypes = listOf(PackType.COINS, PackType.POINTS)
-            lastPackTypes.forEach {
-                val lastMapping = Database.getItemsByPack(player, it.index)
-                if (lastMapping.isEmpty()) {
-                    return@forEach
-                }
-                currentPacks[it] = Pack(it, lastMapping)
-            }
+            packs += Pack(it, lastMapping, getLockLevelByPlayer(player, it))
         }
     }
 
     // init.
     private fun init() {
         PackType.values().forEach {
-            if (!player.hasPermission(it.identifier)) {
+            val name = it.name.lowercase()
+            if (!player.hasPermission(name)) {
                 return@forEach
             }
-            currentPacks[it] = Pack(it)
+            val lockLevel = if (player.hasPermission("admin")) {
+                LockLevel.A
+            } else {
+                LockLevel.A
+            }
+            packs += Pack(it, Pack.getEmptyItemMapping(), lockLevel)
+            setLockLevelOfPlayer(player, it, lockLevel)
         }
     }
 
     // save to database.
     fun save() {
-        submit(async = true) {
-            currentPacks.forEach { (type, pack) ->
-                pack.get().forEach { (key, item) ->
-                    Database.setItem(player, type.index, key, item)
-                }
+        packs.forEach { pack ->
+            pack.get().forEach {
+                val packIndex = pack.type.index
+                val slot = it.key
+                val item = it.value
+                Database.setItem(player, packIndex, slot, item)
             }
         }
     }
 
-    fun getPackByIndex(num: Int): Pack? {
-        return currentPacks.values.find { it.type.index == num }
-    }
-
-    fun unlock(packType: PackType, forceUnlock: Boolean = false): UnlockFailType? {
-        if (currentPacks.keys.contains(packType)) {
+    fun unlock(type: PackType, levelTo: LockLevel, forceUnlock: Boolean = false): UnlockFailType? {
+        val currentLevel = getLockLevelByPlayer(player, type)
+        if (currentLevel == LockLevel.A) {
             return UnlockFailType.ALREADY_UNLOCKED
         }
         if (forceUnlock) {
-            doUnlock(packType)
+            doUnlock(type, levelTo)
+            return null
         }
-        val unlockCondition = packType.packUnlockCondition ?: return UnlockFailType.TYPE_WRONG
-        unlockCondition.currencyMap.forEach { (currency, value) ->
-            if (GemsEconomyAPI.getBalance(player.uniqueId, currency) < value) {
-                return UnlockFailType.NOT_ENOUGH
-            }
-            doUnlock(packType)
-            GemsEconomyAPI.withdraw(player.uniqueId, value, currency, "解锁 ${packType.internalName} 背包扣款")
+        val condition = type.conditionMap[levelTo]!!
+        val required = condition.required
+        if (GemsEconomyAPI.getBalance(player.uniqueId, condition.required.first) < condition.required.second) {
+            return UnlockFailType.NOT_ENOUGH
         }
+        doUnlock(type, levelTo)
+        GemsEconomyAPI.withdraw(player.uniqueId, required.second, required.first, "解锁 ${type.name} 背包扣款")
         return null
     }
 
-    private fun doUnlock(packType: PackType) {
-        currentPacks[packType] = Pack(packType)
-        save()
+    private fun doUnlock(type: PackType, levelTo: LockLevel) {
+        setLockLevelOfPlayer(player, type, levelTo)
+    }
+
+    fun getPackByIndex(index: Int): Pack? {
+        return packs.getOrNull(index)
+    }
+
+    fun getLockLevelByPlayer(player: Player, type: PackType): LockLevel {
+        val tier = CargoAPI.getAccountsManager().getAccount(player).get(ValueType.STORAGE, "KirraPack::${type.name.lowercase()}")!!
+        return LockLevel.valueOf(tier)
+    }
+
+    fun setLockLevelOfPlayer(player: Player, type: PackType, level: LockLevel) {
+        CargoAPI.getAccountsManager().getAccount(player).set(ValueType.STORAGE, "KirraPack::${type.name.lowercase()}", level.name)
     }
 
     fun drop() {

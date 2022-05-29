@@ -1,26 +1,20 @@
 package net.sakuragame.eternal.kirrapack.function
 
-import com.taylorswiftcn.megumi.uifactory.event.comp.UIFCompSubmitEvent
 import net.sakuragame.eternal.dragoncore.api.event.PlayerSlotUpdateEvent
 import net.sakuragame.eternal.dragoncore.api.event.slot.PlayerSlotClickEvent
+import net.sakuragame.eternal.dragoncore.network.PacketSender
+import net.sakuragame.eternal.justinventory.JustInventory
 import net.sakuragame.eternal.justinventory.api.event.WarehouseOpenEvent
-import net.sakuragame.eternal.justinventory.ui.screen.WarehouseScreen
-import net.sakuragame.eternal.justmessage.api.MessageAPI
-import net.sakuragame.eternal.kirrapack.KirraPack
+import net.sakuragame.eternal.justinventory.api.event.WarehouseOpenEvent.LockLevel.*
 import net.sakuragame.eternal.kirrapack.Profile.Companion.profile
-import net.sakuragame.eternal.kirrapack.getLockMessage
 import net.sakuragame.eternal.kirrapack.pack.Pack
 import net.sakuragame.eternal.kirrapack.pack.PackType
-import net.sakuragame.eternal.kirrapack.pack.SlotData
-import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockFailType.*
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import taboolib.common.platform.event.EventPriority
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common5.Baffle
-import taboolib.platform.util.asLangText
-import taboolib.platform.util.isAir
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -38,46 +32,6 @@ object FunctionListener {
         Baffle.of(1, TimeUnit.SECONDS)
     }
 
-    @SubscribeEvent
-    fun e(e: UIFCompSubmitEvent) {
-        val player = e.player
-        val profile = player.profile() ?: return
-        val screenID = e.screenID
-
-        if (screenID != WarehouseScreen.screenID) return
-        val name = e.params.getParam(0)
-
-        if (name != KirraPack.justInventory.name) return
-
-        when (e.params.getParam(1)) {
-            "warehouse_page" -> {
-                doCursorItemSafetyCheck(player)
-                val page = e.params.getParamI(2)
-                WarehouseScreen.open(player, page)
-            }
-            "warehouse_unlock" -> {
-                if (!baffle.hasNext(player.name)) {
-                    MessageAPI.sendActionTip(player, player.asLangText("fail-unlock-pack-by-cooldown"))
-                    return
-                }
-                baffle.next(player.name)
-                val page = e.params.getParamI(2) - 1
-                val packType = PackType.values().find { it.index == page }!!
-                when (profile.unlock(packType)) {
-                    null -> {
-                        MessageAPI.sendActionTip(player, player.asLangText("succ-unlock-pack"))
-                        player.closeInventory()
-                    }
-                    NOT_ENOUGH -> MessageAPI.sendActionTip(player, player.asLangText("fail-unlock-pack-by-coins-not-enough"))
-                    TYPE_WRONG -> MessageAPI.sendActionTip(player, player.asLangText("fail-unlock-pack-by-type-wrong"))
-                    ALREADY_UNLOCKED -> {
-                        // GO FUCK YOURSELF
-                    }
-                }
-            }
-        }
-    }
-
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun e(e: PlayerSlotClickEvent) {
         val player = e.player
@@ -85,10 +39,13 @@ object FunctionListener {
 
         if (e.isCancelled) return
 
-        val slotData = getSlotData(player, ident) ?: return
         val profile = player.profile() ?: return
-        val pack = profile.getPackByIndex(slotData.index) ?: return
-        val item = pack.getItem(slotData.slot)
+
+        val page = getPageOfPlayer(player) ?: return
+        val slot = getSlotByIdentifier(ident) ?: return
+
+        val pack = profile.getPackByIndex(page) ?: return
+        val item = pack.getItem(slot)
 
         e.slotItem = item
         updateStock(player, pack)
@@ -99,12 +56,16 @@ object FunctionListener {
         val player = e.player
         val ident = e.identifier
 
-        val slotData = getSlotData(player, ident) ?: return
+        val page = getPageOfPlayer(player) ?: return
+        val slot = getSlotByIdentifier(ident) ?: return
+
         val profile = player.profile() ?: return
-        val pack = profile.getPackByIndex(slotData.index) ?: return
+        val pack = profile.getPackByIndex(page) ?: return
         val item = e.itemStack
 
-        pack.setItem(slotData.slot, item)
+        pack.setItem(slot, item)
+
+        PacketSender.putClientSlotItem(player, ident, item)
         updateStock(player, pack)
     }
 
@@ -116,44 +77,44 @@ object FunctionListener {
         val pack = profile.getPackByIndex(actualIndex)
         if (pack == null) {
             val packType = PackType.values().first { it.index == actualIndex }
-            e.name = packType.internalName
+            e.name = packType.displayName
             e.stock = "&a库存: &f---"
-            e.setLock(packType.getLockMessage())
             return
         }
-        e.name = pack.type.internalName
+        e.name = pack.type.displayName
+        e.level = pack.level
+        if (pack.level != A) {
+            e.priceDesc = pack.type.conditionMap[pack.level]!!.description
+        }
         e.contents = getContents(pack)
         e.stock = getStock(pack)
     }
 
-    private fun doCursorItemSafetyCheck(player: Player) {
-        val cursorItem = player.itemOnCursor.clone()
-        if (cursorItem.isAir()) return
-        player.itemOnCursor = null
-        if (player.inventory.firstEmpty() == -1) {
-            player.closeInventory()
-            player.world.dropItemNaturally(player.location, cursorItem)
+    private fun getStock(pack: Pack): String {
+        val count = pack.get().values.count { it.type != Material.AIR }
+        val totalCount = when (pack.level) {
+            D -> 0
+            C -> 18
+            B -> 36
+            A -> 54
         }
-        player.inventory.addItem(cursorItem)
+        return "&a库存: &f$count/$totalCount"
+    }
+
+    private fun getSlotByIdentifier(ident: String): Int? {
+        return ident
+            .replace("warehouse_", "")
+            .toIntOrNull()
+    }
+
+    private fun getPageOfPlayer(player: Player): Int? {
+        return JustInventory.getWarehouse().cache[player.uniqueId]
     }
 
     private fun updateStock(player: Player, pack: Pack) {
-        WarehouseScreen.setStock(player, getStock(pack))
-    }
-
-    private fun getSlotData(player: Player, identifier: String): SlotData? {
-        if (!identifier.startsWith("warehouse_")) return null
-        val index = WarehouseScreen.warehousePage.getOrDefault(player.uniqueId, -1) - 1
-        val slot = identifier.substring(10).toIntOrNull() ?: return null
-        if (index == -1) {
-            return null
-        }
-        return SlotData(index, slot)
-    }
-
-    private fun getStock(pack: Pack): String {
-        val count = pack.get().values.count { it.type != Material.AIR }
-        return "&a库存: &f${count}/54"
+        val mapping = mutableMapOf<String, String>()
+        mapping += "warehouse_stock" to getStock(pack)
+        PacketSender.sendSyncPlaceholder(player, mapping)
     }
 
     private fun getContents(pack: Pack): LinkedList<ItemStack> {

@@ -5,6 +5,12 @@ plugins {
 }
 
 taboolib {
+    description {
+        dependencies {
+            name("JustInventory")
+            name("EternalCargo")
+        }
+    }
     install("common")
     install("common-5")
     install("module-configuration")
@@ -35,6 +41,7 @@ repositories {
 
 dependencies {
     compileOnly("ink.ptms:Zaphkiel:1.7.6@jar")
+    compileOnly("net.sakuragame.eternal:JustInventory:1.0.2-SNAPSHOT@jar")
     compileOnly("net.sakuragame.eternal:DragonCore:2.5.1-SNAPSHOT@jar")
     compileOnly("net.sakuragame:DataManager-Bukkit-API:1.3.2-SNAPSHOT@jar")
     compileOnly("net.sakuragame.eternal:JustMessage:1.0.2-SNAPSHOT@jar")
