@@ -12,7 +12,7 @@ import taboolib.module.chat.colored
  * @author kirraObj
  * @since 2022/1/9 2:35
  */
-enum class PackType(val index: Int, val displayName: String, val conditionMap: Map<WarehouseOpenEvent.LockLevel, UnlockData>) {
+enum class PackType(val index: Int, val displayName: String, val conditionMap: MutableMap<WarehouseOpenEvent.LockLevel, UnlockData>) {
 
     DEFAULT(0, "&6默认仓库".colored(), KirraPackAPI.getConditionByIndex(1)),
     MONEY(1, "&6金币仓库".colored(), KirraPackAPI.getConditionByIndex(2)),

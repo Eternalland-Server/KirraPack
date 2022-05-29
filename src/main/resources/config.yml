@@ -7,44 +7,62 @@ settings:
     database: rpg-test
   lock-progress:
     default:
-      - description: ""
+      first:
+        description: ""
         required: "NONE"
-      - description: "&a价格: 100.0万金币."
+      second:
+        description: "&a价格: 100.0万金币."
         required: "MONEY @ 10000000.0"
-      - description: "&a价格: 500.0万金币."
+      third:
+        description: "&a价格: 500.0万金币."
         required: "MONEY @ 50000000.0"
     money:
-      - description: "&a价格: 1000.0万金币."
+      first:
+        description: "&a价格: 1000.0万金币."
         required: "MONEY @ 100000000.0"
-      - description: "&a价格: 2500.0万金币."
+      second:
+        description: "&a价格: 2500.0万金币."
         required: "MONEY @ 250000000.0"
-      - description: "&a价格: 5000.0万金币."
+      third:
+        description: "&a价格: 5000.0万金币."
         required: "MONEY @ 500000000.0"
     coins:
-      - description: "&a价格: 50.0万点券."
+      first:
+        description: "&a价格: 50.0万点券."
         required: "COINS @ 5000000.0"
-      - description: "&a价格: 100.0万点券."
+      second:
+        description: "&a价格: 100.0万点券."
         required: "COINS @ 10000000.0"
-      - description: "&a价格: 500.0万点券."
+      third:
+        description: "&a价格: 500.0万点券."
         required: "COINS @ 50000000.0"
     vip:
-      - description: "&a开通 VIP 自动解锁"
+      first:
+        description: "&a开通 VIP 自动解锁"
         required: "PERMISSION @ VIP"
-      - description: "&a价格: 100.0万点券."
+      second:
+        description: "&a价格: 100.0万点券."
         required: "COINS @ 10000000.0"
-      - description: "&a价格: 500.0万点券."
+      third:
+        description: "&a价格: 500.0万点券."
         required: "COINS @ 20000000.0"
     svp:
-      - description: "&a开通 SVP 自动解锁"
+      first:
+        description: "&a开通 SVP 自动解锁"
         required: "SVP @ PERMISSION"
-      - description: "&a价格: 100.0万点券."
+      second:
+        description: "&a价格: 100.0万点券."
         required: "COINS @ 10000000.0"
-      - description: "&a价格: 500.0万点券."
+      third:
+        description: "&a价格: 500.0万点券."
         required: "COINS @ 20000000.0"
     mvp:
-      - description: "&a开通 MVP 自动解锁"
+      first:
+        description: "&a开通 MVP 自动解锁"
         required: "MVP @ PERMISSION"
-      - description: "&a价格: 100.0万点券."
+      second:
+        description: "&a价格: 100.0万点券."
         required: "COINS @ 10000000.0"
-      - description: "&a价格: 500.0万点券."
+      third:
+        description: "&a价格: 500.0万点券."
         required: "COINS @ 20000000.0"

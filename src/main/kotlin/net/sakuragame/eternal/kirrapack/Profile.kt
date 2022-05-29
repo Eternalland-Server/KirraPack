@@ -115,7 +115,7 @@ class Profile(val player: Player) {
             val lockLevel = if (player.hasPermission("admin")) {
                 LockLevel.A
             } else {
-                LockLevel.A
+                LockLevel.C
             }
             packs += Pack(it, Pack.getEmptyItemMapping(), lockLevel)
             setLockLevelOfPlayer(player, it, lockLevel)
@@ -132,6 +132,10 @@ class Profile(val player: Player) {
                 Database.setItem(player, packIndex, slot, item)
             }
         }
+    }
+
+    fun getPackByIndex(index: Int): Pack? {
+        return packs.getOrNull(index)
     }
 
     fun unlock(type: PackType, levelTo: LockLevel, forceUnlock: Boolean = false): UnlockFailType? {
@@ -157,16 +161,12 @@ class Profile(val player: Player) {
         setLockLevelOfPlayer(player, type, levelTo)
     }
 
-    fun getPackByIndex(index: Int): Pack? {
-        return packs.getOrNull(index)
-    }
-
-    fun getLockLevelByPlayer(player: Player, type: PackType): LockLevel {
+    private fun getLockLevelByPlayer(player: Player, type: PackType): LockLevel {
         val tier = CargoAPI.getAccountsManager().getAccount(player).get(ValueType.STORAGE, "KirraPack::${type.name.lowercase()}")!!
         return LockLevel.valueOf(tier)
     }
 
-    fun setLockLevelOfPlayer(player: Player, type: PackType, level: LockLevel) {
+    private fun setLockLevelOfPlayer(player: Player, type: PackType, level: LockLevel) {
         CargoAPI.getAccountsManager().getAccount(player).set(ValueType.STORAGE, "KirraPack::${type.name.lowercase()}", level.name)
     }
 

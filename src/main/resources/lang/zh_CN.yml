@@ -1,4 +1,4 @@
 succ-unlock-pack: "&2&l➱ &a您成功解锁了该背包!"
 fail-unlock-pack-by-cooldown: "&4&l➱ &c不能频繁发起解锁请求."
-fail-unlock-pack-by-type-wrong: "&4&l➱ &c解锁方式错误."
 fail-unlock-pack-by-coins-not-enough: "&4&l➱ &c您的所需货币不够."
+fail-unlock-pack-by-already-unlocked: "&4&l➱ &c您已经解锁到满级了!"
