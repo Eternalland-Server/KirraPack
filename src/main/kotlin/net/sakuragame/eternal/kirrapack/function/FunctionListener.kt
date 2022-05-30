@@ -138,8 +138,9 @@ object FunctionListener {
     }
 
     private fun updateStock(player: Player, pack: Pack) {
-        val mapping = mutableMapOf<String, String>()
-        mapping += "warehouse_stock" to getStock(pack)
+        val mapping = mutableMapOf<String, String>().apply {
+            this["warehouse_stock"] = getStock(pack)
+        }
         PacketSender.sendSyncPlaceholder(player, mapping)
     }
 

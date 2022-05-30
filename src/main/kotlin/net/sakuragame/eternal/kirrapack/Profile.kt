@@ -140,7 +140,11 @@ class Profile(val player: Player) {
     }
 
     private fun doUnlock(type: PackType, levelTo: LockLevel) {
-        setLockLevelOfPlayer(player, type, levelTo)
+        submit(async = true, delay = 2L) {
+            setLockLevelOfPlayer(player, type, levelTo)
+            val pack = packs.find { it.type == type } ?: return@submit
+            pack.level = levelTo
+        }
     }
 
     private fun getLockLevelByPlayer(player: Player, type: PackType): LockLevel {

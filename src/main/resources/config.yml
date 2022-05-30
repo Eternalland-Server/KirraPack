@@ -39,7 +39,7 @@ settings:
     vip:
       first:
         description: "&a开通 VIP 自动解锁"
-        required: "PERMISSION @ VIP"
+        required: "POINTS @ 999999999999999.0"
       second:
         description: "&a价格: 100.0万点券."
         required: "COINS @ 10000000.0"
@@ -49,7 +49,7 @@ settings:
     svp:
       first:
         description: "&a开通 SVP 自动解锁"
-        required: "SVP @ PERMISSION"
+        required: "POINTS @ 999999999999999.0"
       second:
         description: "&a价格: 100.0万点券."
         required: "COINS @ 10000000.0"
@@ -59,7 +59,7 @@ settings:
     mvp:
       first:
         description: "&a开通 MVP 自动解锁"
-        required: "MVP @ PERMISSION"
+        required: "POINTS @ 999999999999999.0"
       second:
         description: "&a价格: 100.0万点券."
         required: "COINS @ 10000000.0"
