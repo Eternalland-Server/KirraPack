@@ -79,29 +79,14 @@ class Profile(val player: Player) {
 
     // read from database.
     fun read() {
-        val defaultMapping = Database.getItemsByPack(player, PackType.DEFAULT.index)
         // 默认背包为空, 说明玩家第一次进入服务器, 进行初始化
-        if (defaultMapping.isEmpty()) {
+        if (Database.getItemsByPack(player, PackType.DEFAULT.index).isEmpty()) {
             init()
             return
         }
-        // 设置默认背包
-        packs += Pack(PackType.DEFAULT, defaultMapping, getLockLevelByPlayer(player, PackType.DEFAULT))
-        // 设置钞能力背包
-        listOf(PackType.VIP, PackType.SVP, PackType.MVP).forEach {
-            val name = it.name.lowercase()
-            if (player.hasPermission(name)) {
-                val mapping = Database.getItemsByPack(player, it.index)
-                packs += Pack(it, mapping, getLockLevelByPlayer(player, it))
-            }
-        }
-        // 设置金币与点券背包
-        listOf(PackType.MONEY, PackType.COINS).forEach {
-            val lastMapping = Database.getItemsByPack(player, it.index)
-            if (lastMapping.isEmpty()) {
-                return@forEach
-            }
-            packs += Pack(it, lastMapping, getLockLevelByPlayer(player, it))
+        PackType.values().forEach {
+            val mapping = Database.getItemsByPack(player, it.index)
+            packs += Pack(it, mapping, getLockLevelByPlayer(player, it))
         }
     }
 
@@ -109,13 +94,10 @@ class Profile(val player: Player) {
     private fun init() {
         PackType.values().forEach {
             val name = it.name.lowercase()
-            if (!player.hasPermission(name)) {
-                return@forEach
-            }
-            val lockLevel = if (player.hasPermission("admin")) {
-                LockLevel.A
-            } else {
-                LockLevel.C
+            val lockLevel = when {
+                !player.hasPermission(name) -> LockLevel.D
+                player.hasPermission("admin") -> LockLevel.A
+                else -> LockLevel.C
             }
             packs += Pack(it, Pack.getEmptyItemMapping(), lockLevel)
             setLockLevelOfPlayer(player, it, lockLevel)

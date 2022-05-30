@@ -82,7 +82,7 @@ object FunctionListener {
             val type = PackType.values().first { it.index == actualIndex }
             e.name = type.displayName
             e.stock = "&a库存: &f---"
-            e.priceDesc = type.conditionMap[D]!!.description
+            e.priceDesc = type.conditionMap[C]!!.description
             return
         }
         e.name = pack.type.displayName
