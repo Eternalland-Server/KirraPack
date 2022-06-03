@@ -9,6 +9,7 @@ import net.sakuragame.eternal.kirrapack.pack.Pack
 import net.sakuragame.eternal.kirrapack.pack.PackType
 import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockFailType
 import org.bukkit.entity.Player
+import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerKickEvent
 import org.bukkit.event.player.PlayerQuitEvent
@@ -16,6 +17,8 @@ import taboolib.common.platform.Schedule
 import taboolib.common.platform.event.EventPriority
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common.platform.function.submit
+import taboolib.common5.Baffle
+import java.util.concurrent.TimeUnit
 
 /**
  * KirraPack
@@ -31,6 +34,10 @@ class Profile(val player: Player) {
 
     companion object {
 
+        private val baffle by lazy {
+            Baffle.of(3, TimeUnit.SECONDS)
+        }
+
         val profiles = mutableMapOf<String, Profile>()
 
         fun Player.profile() = profiles.values.firstOrNull { it.player.uniqueId == uniqueId }
@@ -45,6 +52,19 @@ class Profile(val player: Player) {
                 it.save()
             }
             debug("保存完毕.")
+        }
+
+        @SubscribeEvent
+        fun e(e: InventoryCloseEvent) {
+            val player = e.player as? Player ?: return
+            val profile = player.profile() ?: return
+            if (!baffle.hasNext(player.name)) {
+                return
+            }
+            baffle.next(player.name)
+            submit(async = true) {
+                profile.save()
+            }
         }
 
         @SubscribeEvent(priority = EventPriority.HIGHEST)
