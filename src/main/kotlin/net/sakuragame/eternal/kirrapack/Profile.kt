@@ -9,7 +9,6 @@ import net.sakuragame.eternal.kirrapack.pack.Pack
 import net.sakuragame.eternal.kirrapack.pack.PackType
 import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockFailType
 import org.bukkit.entity.Player
-import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerKickEvent
 import org.bukkit.event.player.PlayerQuitEvent
@@ -17,8 +16,6 @@ import taboolib.common.platform.Schedule
 import taboolib.common.platform.event.EventPriority
 import taboolib.common.platform.event.SubscribeEvent
 import taboolib.common.platform.function.submit
-import taboolib.common5.Baffle
-import java.util.concurrent.TimeUnit
 
 /**
  * KirraPack
@@ -33,10 +30,6 @@ class Profile(val player: Player) {
     private val packs = mutableListOf<Pack>()
 
     companion object {
-
-        private val baffle by lazy {
-            Baffle.of(3, TimeUnit.SECONDS)
-        }
 
         val profiles = mutableMapOf<String, Profile>()
 
@@ -54,23 +47,10 @@ class Profile(val player: Player) {
             debug("保存完毕.")
         }
 
-        @SubscribeEvent
-        fun e(e: InventoryCloseEvent) {
-            val player = e.player as? Player ?: return
-            val profile = player.profile() ?: return
-            if (!baffle.hasNext(player.name)) {
-                return
-            }
-            baffle.next(player.name)
-            submit(async = true) {
-                profile.save()
-            }
-        }
-
         @SubscribeEvent(priority = EventPriority.HIGHEST)
         fun e(e: PlayerJoinEvent) {
             val player = e.player
-            submit(async = true) {
+            submit(async = true, delay = 40L) {
                 profiles[player.name] = Profile(player).apply {
                     read()
                 }
@@ -142,7 +122,7 @@ class Profile(val player: Player) {
 
     fun unlock(type: PackType, levelTo: LockLevel, forceUnlock: Boolean = false): UnlockFailType? {
         val currentLevel = getLockLevelByPlayer(player, type)
-        if (currentLevel == LockLevel.A) {
+        if (currentLevel == LockLevel.A || currentLevel.index >= levelTo.index) {
             return UnlockFailType.ALREADY_UNLOCKED
         }
         if (forceUnlock) {
