@@ -8,6 +8,7 @@ import net.sakuragame.eternal.kirrapack.function.FunctionListener
 import net.sakuragame.eternal.kirrapack.pack.Pack
 import net.sakuragame.eternal.kirrapack.pack.PackType
 import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockFailType
+import net.sakuragame.serversystems.manage.client.api.ClientManagerAPI
 import org.bukkit.entity.Player
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerKickEvent
@@ -50,6 +51,10 @@ class Profile(val player: Player) {
         @SubscribeEvent(priority = EventPriority.HIGHEST)
         fun e(e: PlayerJoinEvent) {
             val player = e.player
+            val userInfo = ClientManagerAPI.getUserInfo(player.uniqueId) ?: return
+            if (userInfo.userID == -1) {
+                return
+            }
             submit(async = true, delay = 40L) {
                 profiles[player.name] = Profile(player).apply {
                     read()

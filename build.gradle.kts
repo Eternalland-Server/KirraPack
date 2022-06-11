@@ -9,6 +9,7 @@ taboolib {
         dependencies {
             name("JustInventory")
             name("EternalCargo")
+            name("DataManager-Bukkit")
         }
     }
     install("common")

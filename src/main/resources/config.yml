@@ -8,8 +8,8 @@ settings:
   lock-progress:
     default:
       first:
-        description: ""
-        required: "NONE"
+        description: "&a价格: 0 金币."
+        required: "MONEY @ 0.0"
       second:
         description: "&a价格: 100.0万金币."
         required: "MONEY @ 10000000.0"
