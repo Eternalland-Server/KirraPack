@@ -47,7 +47,7 @@ object Database {
             type(ColumnTypeSQL.VARCHAR, 64)
         }
         add("zap_data") {
-            type(ColumnTypeSQL.VARCHAR, 512)
+            type(ColumnTypeSQL.TEXT)
         }
         add("zap_unique") {
             type(ColumnTypeSQL.VARCHAR, 128)
@@ -123,7 +123,11 @@ object Database {
     }
 
     private fun getItemFromParameters(
-        player: Player, id: String, data: String, unique: String, amount: Int,
+        player: Player,
+        id: String,
+        data: String,
+        unique: String,
+        amount: Int,
     ): ItemStack {
         val jsonObj = JsonObject().also { obj ->
             if (id == "null") {
