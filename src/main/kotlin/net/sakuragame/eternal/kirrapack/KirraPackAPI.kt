@@ -6,7 +6,7 @@ import net.sakuragame.eternal.justinventory.api.event.WarehouseOpenEvent.LockLev
 import net.sakuragame.eternal.kirrapack.pack.unlock.UnlockData
 import taboolib.module.configuration.Configuration
 
-@Suppress("SpellCheckingInspection", "UNCHECKED_CAST")
+@Suppress("SpellCheckingInspection")
 object KirraPackAPI {
 
     fun save() {
@@ -17,8 +17,7 @@ object KirraPackAPI {
         return when (lockLevel) {
             D -> C
             C -> B
-            B -> A
-            A -> A
+            else -> A
         }
     }
 
